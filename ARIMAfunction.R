@@ -5,17 +5,12 @@
 # have to give it start and end dates of interest
 # comment out flow info for BVR data if you want or ignore when running ARIMA
 
-## FOR FCR: Depths = 1.6 or 8
-##          CTD = 1.1 - 2.1 or 7.5 - 8.5
-## FOR BVR: Depths = 3 or 9
-##          CTD = 2.5 - 3.5 or 8.5 - 9.5
+## FOR FCR: Depths = 8
+##          CTD = 7.5 - 8.5
+## FOR BVR: Depths = 9
+##          CTD = 8.5 - 9.5
 ## Use the same precip data for both
-###FCR
-## 2020 dates: 01-31-2020, 11-06-2020
-## 2023 dates: 04-04-2023 12-05-2023
-###BVR
-## 2020 dates: 03-30-2020, 11-16-2020
-## 2023 dates: 03-21-2023 12-05-2023
+## ignore Q for BVR
 
 
 process_reservoir_data <- function(reservoir, year, start_date, end_date) {
@@ -39,18 +34,8 @@ process_reservoir_data <- function(reservoir, year, start_date, end_date) {
   metal <- read_csv("https://raw.githubusercontent.com/carlybauer/Reservoirs/refs/heads/master/Data/DataAlreadyUploadedToEDI/EDIProductionFiles/MakeEMLmetals/2024/Metals_2014_2023.csv")
   metal$DateTime <- as.POSIXct(metal$DateTime)
   
-  # # this gets rid of any values that we flagged as abnormally high in the data
-  # # not including this because it gets rid of a lot of BVR values
-  # metalsflag <- metal %>% 
-  #   filter(
-  #     Flag_TAl_mgL != 8 & Flag_SAl_mgL != 8 & Flag_TAl_mgL != 68 & Flag_SAl_mgL != 68,
-  #     Flag_TFe_mgL != 8 & Flag_SFe_mgL != 8 & Flag_TFe_mgL != 68 & Flag_SFe_mgL != 68,
-  #     Flag_TMn_mgL != 8 & Flag_SMn_mgL != 8 & Flag_TMn_mgL != 68 & Flag_SMn_mgL != 68,
-  #     Flag_TCu_mgL != 8 & Flag_SCu_mgL != 8 & Flag_TCu_mgL != 68 & Flag_SCu_mgL != 68,
-  #     Flag_TSr_mgL != 8 & Flag_SSr_mgL != 8 & Flag_TSr_mgL != 68 & Flag_SSr_mgL != 68,
-  #     Flag_TBa_mgL != 8 & Flag_SBa_mgL != 8 & Flag_TBa_mgL != 68 & Flag_SBa_mgL != 68)
-  
-  
+
+  # filter and selects metal data of interest
   metals <- metal %>%
     mutate(Year = year(DateTime), 
            Date_real = date(DateTime)) %>%
@@ -58,8 +43,8 @@ process_reservoir_data <- function(reservoir, year, start_date, end_date) {
            Site == 50, 
            Year == year, 
            Depth_m %in% metal_depths) %>%
-    select(Date_real, Year, Depth_m, TFe_mgL, SFe_mgL, TMn_mgL, SMn_mgL, SBa_mgL, TBa_mgL, 
-           SCu_mgL, TCu_mgL, SSr_mgL, TSr_mgL, SAl_mgL, TAl_mgL) %>%
+    select(Date_real, Year, Depth_m, TBa_mgL, 
+           TCu_mgL, TAl_mgL) %>%
     drop_na()
   
  
@@ -94,14 +79,16 @@ process_reservoir_data <- function(reservoir, year, start_date, end_date) {
   hand_env_vars <- read_csv("https://pasta.lternet.edu/package/data/eml/edi/198/13/e50a50d062ee73f4d85e4f20b360ce4f")
 
   hand_env_vars$DateTime <- as.POSIXct(hand_env_vars$DateTime)
-  
+
+  # filters and selects hand-held environmental variables of interest
   hand_env <- hand_env_vars %>%
     mutate(Year = year(DateTime),
            Date_real = date(DateTime)) %>%
     filter(Reservoir == reservoir, Site == 50, Year == year, Depth_m %in% metal_depths) %>% 
     select(Year, Date_real, Depth_m, DO_mgL, Temp_C, pH) %>% 
     mutate(Week = week(Date_real))
-  
+
+  #joins the hand-held env data we have with the weeks we need
   hand_env_weekly <- weekly_dates %>%
     left_join(hand_env, by = c("Year", "Week"))
   
@@ -109,20 +96,21 @@ process_reservoir_data <- function(reservoir, year, start_date, end_date) {
   env_vars <- read_csv("https://pasta.lternet.edu/package/data/eml/edi/200/14/0432a298a90b2b662f26c46071f66b8a")
   
   env_vars$DateTime <- as.POSIXct(env_vars$DateTime)
-  
+
+  # filters and selects CTD data of interest
   env <- env_vars %>% 
     mutate(Year = year(DateTime), 
            Date_real = date(DateTime)) %>% 
     filter(Reservoir == reservoir, Site == 50, Year == year, 
            Depth_m >= depth_ranges[[reservoir]]$env[[1]][1] & Depth_m <= depth_ranges[[reservoir]]$env[[1]][2]) %>%
     select(Year, Date_real, Depth_m, DO_mgL, Temp_C, Turbidity_NTU, pH)
-  
+
+  # since observing a range of depths, take a the mean of those depths to represent one measurement 
   env_avg <- env %>% 
     group_by(Date_real) %>% 
     summarize(
       DO_mgL = mean(DO_mgL, na.rm = TRUE),
       Temp_C = mean(Temp_C, na.rm = TRUE),
-      #DOsat_percent = mean(DOsat_percent, na.rm = TRUE),
       Turbidity_NTU = mean(Turbidity_NTU, na.rm = TRUE),
       pH = mean(pH, na.rm = TRUE)) 
   
@@ -130,6 +118,7 @@ process_reservoir_data <- function(reservoir, year, start_date, end_date) {
     mutate(Week = week(Date_real), 
            Year = year(Date_real))
   
+  # join the hand-held env and CTD env data 
   env_weekly_0 <- weekly_dates %>% 
     left_join(env_avg, by = c("Year", "Week"))
   
@@ -159,7 +148,8 @@ process_reservoir_data <- function(reservoir, year, start_date, end_date) {
   met_vars <- read_csv("https://pasta.lternet.edu/package/data/eml/edi/389/8/d4c74bbb3b86ea293e5c52136347fbb0")
   
   met_vars$DateTime <- as.POSIXct(met_vars$DateTime)
-  
+
+  # filters and selects meterological data of interest 
   met <- met_vars %>% 
     mutate(Year = year(DateTime), 
            Date_real = date(DateTime)) %>%
@@ -186,7 +176,8 @@ process_reservoir_data <- function(reservoir, year, start_date, end_date) {
   q_vars <- read_csv("https://pasta.lternet.edu/package/data/eml/edi/202/12/aae7888d68753b276d1623680f81d5de")
   
   q_vars$DateTime <- as.POSIXct(q_vars$DateTime)
-  
+
+  # selects and filters discharge Q of interest
   flow <- q_vars %>% 
     mutate(Year = year(DateTime), 
            Date_real = date(DateTime)) %>%
@@ -208,7 +199,7 @@ process_reservoir_data <- function(reservoir, year, start_date, end_date) {
               Date_real = min(Date_real)) %>% 
     ungroup() %>% 
     mutate(Lag1_Q_Mean_cms = lag(Q_Mean_cms, n = 1),
-           Lag1_Q_Sum_cms = lag(Q_Sum_cms, n = 1)) #lags q by 1 week 
+           Lag1_Q_Sum_cms = lag(Q_Sum_cms, n = 1)) #lags q by 1 week - this is the variable used in ARIMA analysis
   
   q_weekly <- weekly_dates %>% 
     left_join(q_sum, by = c("Year", "Week")) %>% 
