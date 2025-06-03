@@ -3,14 +3,14 @@
 # 31 Jan 2025
 
 ## script calculates average sed flux for metals 
-## calculates cumulative average sed flux for metals
+## calculates cumulative sed flux for metals
 ## filters for specific years 
 ## tests for normality using shapiro test between hypo FCR and BVR sed fluxes
 ## tests for variance using var.test 
-## runs t.test to test significance between FCR and BVR sed flux and cumul sed flux 
+## runs t.test or Wilcoxon Signed Rank test to test significance between FCR and BVR cumulative removal 
 
-## also creates variables for bar plots to look at mean total sed flux for each year 
-## with standard deviations calculated and plotted as error bars
+## also creates variables for dot plots
+## with means plotted as diamonds
 ## tests normality and uses appropriate two-sample t-test to test if mean are 
 ## statistically significantly different between FCR and BVR
 
@@ -180,17 +180,17 @@ FluxHypPre <- fluxesO2 %>%
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::##
 # calculate total number of days included in sampling year for each reservoir
 # to confirm we are using around the same number of collection days to compare with
-total_duration <- FluxHypPre %>%
-  group_by(Year, Reservoir) %>%
-  summarise(Total_Duration_Days = sum(Duration_days, na.rm = TRUE), .groups = "drop")
+# total_duration <- FluxHypPre %>%
+#  group_by(Year, Reservoir) %>%
+#  summarise(Total_Duration_Days = sum(Duration_days, na.rm = TRUE), .groups = "drop")
 
-print(total_duration)# 2020 had 9 day difference, 2021 had 7 day difference, 2022 and 2023 same days
+#  print(total_duration)# 2020 had 9 day difference, 2021 had 7 day difference, 2022 and 2023 same days
 
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::##
 ### Additional tables in appendix - have to run this to get plots
 ## FIND MAXES and save into dataframe 
 # Define the metals of interest
-metals <- c("CumulAlFlux_gm2", "CumulBaFlux_gm2", "CumulCuFlux_gm2", "CumulSrFlux_gm2")
+metals <- c("CumulAlFlux_gm2", "CumulBaFlux_gm2", "CumulCuFlux_gm2")
 
 # Compute max values for each year and reservoir
 max_fluxes <- FluxHypPre %>%
@@ -265,7 +265,6 @@ plot_metal <- function(metal_name, y_label, plot_title) {
 Al <- plot_metal("Al", "Cumulative Al Removal (g/m²)", "Aluminum")
 Ba <- plot_metal("Ba", "Cumulative Ba Removal (g/m²)", "Barium")
 Cu <- plot_metal("Cu", "Cumulative Cu Removal (g/m²)", "Copper")
-# Sr <- plot_metal("Sr", "Cumulative Sr Removal (g/m²)", "Strontium")
 
 # Combine into one plot
 ggarrange(Al, Ba, Cu,
@@ -276,7 +275,7 @@ ggarrange(Al, Ba, Cu,
 ### Additional tables in appendix
 ## FIND MAXES and save into dataframe 
 # Define the metals of interest
-metals <- c("CumulAlFlux_gm2", "CumulBaFlux_gm2", "CumulCuFlux_gm2", "CumulSrFlux_gm2")
+metals <- c("CumulAlFlux_gm2", "CumulBaFlux_gm2", "CumulCuFlux_gm2")
 
 # Compute max values for each year and reservoir
 max_fluxes <- FluxHypPre %>%
@@ -290,7 +289,7 @@ max_fluxes <- FluxHypPre %>%
 ## test for normality on above dataset (max metal flux for each year and reservoir)
 # Check normality using Shapiro-Wilk test for each metal
 metals <- c("max_CumulAlFlux_gm2", "max_CumulBaFlux_gm2", 
-            "max_CumulCuFlux_gm2", "max_CumulSrFlux_gm2")
+            "max_CumulCuFlux_gm2")
 
 normality_results <- lapply(metals, function(metal) {
   shapiro.test(max_fluxes[[metal]])
@@ -302,7 +301,7 @@ normality_results
 ## Al not normal pvalue = 0.01861 Wilcoxon signed-rank test
 ## Ba normal pvalue = 0.6713 paired t test
 ## Cu normal pvalue = 0.5057 paired t test
-## Sr normal pvalue = 0.05052 paired t test
+
 
 # Run paired t-test for each metal 
 t_test_results <- lapply(metals, function(metal) {
@@ -314,10 +313,10 @@ t_test_results <- lapply(metals, function(metal) {
 # Print results
 names(t_test_results) <- metals
 t_test_results
-## valid only for Ba Cu Sr
+## valid only for Ba Cu 
 ## Ba p-value = 0.1001 no significant difference
 ## Cu p-value = 0.01096 significant difference
-## Sr p-value = 0.2277 no significant difference
+
 
 # Run Wilcoxon signed-rank test for each metal
 wilcoxon_results <- lapply(metals, function(metal) {
@@ -345,55 +344,3 @@ summary_max_fluxes <- max_fluxes %>%
 
 
 #write_csv(summary_max_fluxes,'summaryThesisFluxes_gm2.csv')
-
-##:::::::::::::::::::::::::::::::::::::::::::::::::::::##
-## this doesnt jitter nicely. overlaps year and points 
-# # Define color palette
-# fill_colors <- c("FCR" = "#56B4E9", "BVR" = "#D55E00")
-# 
-# # Plot for each metal 
-# Al <- ggplot(filter(plot_data, Metal == "Al"), aes(x = Reservoir, y = Flux, color = Reservoir)) +
-#   geom_jitter(width = 0.1, size = 3, alpha = 1) +
-#   geom_text_repel(aes(label = Year), size = 3, show.legend = FALSE) +
-#   geom_point(data = filter(mean_flux, Metal == "Al"), aes(y = MeanFlux),
-#              shape = 18, color = "black", size = 4, stroke = 1.2, alpha = 0.7) +
-#   scale_color_manual(values = fill_colors) +
-#   labs(x = NULL, y = "Cumulative Al Flux (g/m²)", title = "Aluminum") +
-#   theme_bw() + 
-#   guides(color = "none")
-# 
-# 
-# # Ba
-# Ba <- ggplot(filter(plot_data, Metal == "Ba"), aes(x = Reservoir, y = Flux, color = Reservoir)) +
-#   geom_jitter(width = 0.1, size = 3, alpha = 1) +
-#   geom_text_repel(aes(label = Year), size = 3, show.legend = FALSE) +
-#   geom_point(data = filter(mean_flux, Metal == "Ba"), aes(y = MeanFlux),
-#              shape = 18, color = "black", size = 4, stroke = 1.2, alpha = 0.7) +
-#   scale_color_manual(values = fill_colors) +
-#   labs(x = NULL, y = "Cumulative Ba Flux (g/m²)", title = "Barium") +
-#   theme_bw() + guides(color = "none")
-# 
-# # Cu
-# Cu <- ggplot(filter(plot_data, Metal == "Cu"), aes(x = Reservoir, y = Flux, color = Reservoir)) +
-#   geom_jitter(width = 0.1, size = 3, alpha = 1) +
-#   geom_text_repel(aes(label = Year), size = 3, show.legend = FALSE) +
-#   geom_point(data = filter(mean_flux, Metal == "Cu"), aes(y = MeanFlux),
-#              shape = 18, color = "black", size = 4, stroke = 1.2, alpha = 0.7) +
-#   scale_color_manual(values = fill_colors) +
-#   labs(x = NULL, y = "Cumulative Cu Flux (g/m²)", title = "Copper") +
-#   theme_bw() + guides(color = "none")
-# 
-# # Sr
-# Sr <- ggplot(filter(plot_data, Metal == "Sr"), aes(x = Reservoir, y = Flux, color = Reservoir)) +
-#   geom_jitter(width = 0.1, size = 3, alpha = 1) +
-#   geom_text_repel(aes(label = Year), size = 3, show.legend = FALSE) +
-#   geom_point(data = filter(mean_flux, Metal == "Sr"), aes(y = MeanFlux),
-#              shape = 18, color = "black", size = 4, stroke = 1.2, alpha = 0.7) +
-#   scale_color_manual(values = fill_colors) +
-#   labs(x = NULL, y = "Cumulative Sr Flux (g/m²)", title = "Strontium") +
-#   theme_bw() + guides(color = "none")
-# 
-# # Combine into one plot
-# ggarrange(Al, Ba, Cu, Sr,
-#           ncol = 2, nrow = 2,
-#           labels = c("A", "B", "C", "D"))
