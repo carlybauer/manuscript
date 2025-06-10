@@ -3,7 +3,7 @@
 # 17 Sept 2024
 # heatmap total and soluble metals based on year and reservoir 
 
-setwd("/Users/carlybauer/Documents/R/GitHub/Metals")
+#setwd("/Users/carlybauer/Documents/R/GitHub/Metals")
 # Read in Packages
 pacman::p_load(tidyverse, gridExtra)
 library(ggpubr)
@@ -66,7 +66,7 @@ print(heatCu)
 ### Turnover dates 
 # load csv to add lines to fancy plot below
 #create new frames to add TO lines
-TO <- read_csv('TO_Dates.csv')
+TO <- read_csv('https://raw.githubusercontent.com/carlybauer/manuscript/refs/heads/main/TO_Dates.csv')
 
 ### Extra things you may want to change on the plot. 
 
@@ -80,7 +80,7 @@ TBa <- heatTBa +
                        limits = c(0.0030, 0.112300000), # makes same gradient with min and max T and S
                        na.value = "gray")+
   geom_vline(data = TO, aes(xintercept = as.numeric(Date)), 
-             linetype = "solid", color = 'black', linewidth = 0.5)+ 
+             linetype = "dashed", color = 'white', linewidth = 0.75)+ 
   theme(plot.title = element_text(size=10, hjust = 0),
         axis.text=element_text(size=10), #change font size of axis text
         axis.title=element_text(size=10), #change font size of axis titles
@@ -100,7 +100,7 @@ SBa <- heatSBa +
                        limits = c(0.0030, 0.112300000), # makes same gradient with min and max T and S
                        na.value = "gray")+
   geom_vline(data = TO, aes(xintercept = as.numeric(Date)), 
-             linetype = "solid", color = 'black', linewidth = 0.5)+  
+             linetype = "dashed", color = 'white', linewidth = 0.75)+  
   # adjust the size and the position of the title
   theme(plot.title = element_text(size=10, hjust = 0),
         axis.text=element_text(size=10), #change font size of axis text
@@ -131,7 +131,7 @@ TCu <- heatTCu +
                        limits = c(0.0008807913, 0.0043056011), # makes same gradient with min and max T and S
                        na.value = "gray")+
   geom_vline(data = TO, aes(xintercept = as.numeric(Date)), 
-             linetype = "solid", color = 'black', linewidth = 0.5)+  
+             linetype = "dashed", color = 'white', linewidth = 0.75)+  
   theme(plot.title = element_text(size=10, hjust = 0),
         axis.text=element_text(size=10), #change font size of axis text
         axis.title=element_text(size=10), #change font size of axis titles
@@ -151,7 +151,7 @@ SCu <- heatSCu +
                        limits = c(0.0008807913, 0.0043056011), # makes same gradient with min and max T and S
                        na.value = "gray")+
   geom_vline(data = TO, aes(xintercept = as.numeric(Date)), 
-             linetype = "solid", color = 'black', linewidth = 0.5)+  
+             linetype = "dashed", color = 'white', linewidth = 0.75)+  
   # adjust the size and the position of the title
   theme(plot.title = element_text(size=10, hjust = 0),
         axis.text=element_text(size=10), #change font size of axis text
@@ -183,7 +183,7 @@ TAl <- heatTAl +
                        na.value = "gray", 
                        values=rescale(c(0.0010,0.1,0.6884))) +
   geom_vline(data = TO, aes(xintercept = as.numeric(Date)), 
-             linetype = "solid", color = 'black', linewidth = 0.5)+  
+             linetype = "dashed", color = 'white', linewidth = 0.75)+  
   theme(plot.title = element_text(size=10, hjust = 0),
         axis.text=element_text(size=10), #change font size of axis text
         axis.title=element_text(size=10), #change font size of axis titles
@@ -204,7 +204,7 @@ SAl <- heatSAl +
                        na.value = "gray", 
                        values=rescale(c(0.0010,0.1,0.6884))) +
   geom_vline(data = TO, aes(xintercept = as.numeric(Date)), 
-             linetype = "solid", color = 'black', linewidth = 0.5)+ 
+             linetype = "dashed", color = 'white', linewidth = 0.75)+ 
   # adjust the size and the position of the title
   theme(plot.title = element_text(size=10, hjust = 0),
         axis.text=element_text(size=10), #change font size of axis text
