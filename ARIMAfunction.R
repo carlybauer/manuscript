@@ -5,8 +5,8 @@
 # have to give it start and end dates of interest
 # comment out flow info for BVR data if you want or ignore when running ARIMA
 
-## FOR FCR: Depths = 8
-##          CTD = 7.5 - 8.5
+## FOR FCR: Depths = 9
+##          CTD = 8.5 - 9.5
 ## FOR BVR: Depths = 9
 ##          CTD = 8.5 - 9.5
 ## Use the same precip data for both
@@ -23,7 +23,7 @@ process_reservoir_data <- function(reservoir, year, start_date, end_date) {
 # Define depth ranges for metals and environmental data
 # options for hypolimnion 
   depth_ranges <- list(
-    FCR = list(metal = c(8), env = list(c(7.5, 8.5))),
+    FCR = list(metal = c(9), env = list(c(8.5, 9.5))),
     BVR = list(metal = c(9), env = list(c(8.5, 9.5)))
   )
   
