@@ -14,8 +14,8 @@ library(dplyr)
 library(readxl)
 library(broom)
 
-# updated dataset from new qaqc
-data <- 	read_csv("https://pasta-s.lternet.edu/package/data/eml/edi/1308/5/a3faa5a1c31d6eb10ac698a8fdfb9dd2")
+# published isco data
+data <- 	read_csv("https://pasta.lternet.edu/package/data/eml/edi/2035/1/a3faa5a1c31d6eb10ac698a8fdfb9dd2")
 
 data <- data %>% 
   mutate(End_time = as_date(Collection_end_time)) %>% 
